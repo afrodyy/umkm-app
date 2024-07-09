@@ -93,6 +93,7 @@ const icons = freeSet;
     <CModalHeader>
       <CModalTitle id="LiveDemoExampleLabel">Custom pembelian</CModalTitle>
     </CModalHeader>
+    <!-- Menu Body -->
     <CModalBody>
       <CForm>
         <CRow class="mb-3">
@@ -109,6 +110,9 @@ const icons = freeSet;
         </CRow>
       </CForm>
     </CModalBody>
+    <!-- End of Menu Body -->
+
+    <!-- Menu Footer -->
     <CModalFooter class="px-0">
       <CContainer fluid>
         <CRow class="align-items-center">
@@ -120,8 +124,8 @@ const icons = freeSet;
               <CButton
                 @click="
                   () => {
-                    if (this.selectedMenuQtyAfter > 1) {
-                      this.selectedMenuQtyAfter -= 1;
+                    if (selectedMenuQtyAfter > 1) {
+                      selectedMenuQtyAfter -= 1;
                     }
                   }
                 "
@@ -173,6 +177,7 @@ const icons = freeSet;
         </CRow>
       </CContainer>
     </CModalFooter>
+    <!-- End of Menu Footer -->
   </CModal>
   <!-- End of Menu Modal -->
 
@@ -208,7 +213,15 @@ const icons = freeSet;
           >
           <div class="d-flex flex-row my-2">
             <CButton
-              @click="decreaseQty"
+              @click="
+                () => {
+                  if (addedMenu.qty > 1) {
+                    cartDecreaseMenuQty(addedMenu.id);
+                  } else {
+                    removeCartItem(addedMenu.id);
+                  }
+                }
+              "
               color="success"
               class="text-white"
               size="sm"
@@ -216,7 +229,7 @@ const icons = freeSet;
             >
             <span class="mx-3 align-self-center">{{ addedMenu.qty }}</span>
             <CButton
-              @click="increaseQty"
+              @click="cartIncreaseMenuQty(addedMenu.id)"
               color="success"
               class="text-white"
               size="sm"
@@ -236,15 +249,10 @@ const icons = freeSet;
         </CCol>
         <CCol xs="4" class="align-self-center">
           <div class="clearfix">
-            <CImage
-              align="end"
-              rounded
-              src="https://media-order.bkdelivery.co.id/thumb/product_photo/2024/1/10/8qkzdcieytzabv8tj8ldxz_product_details.jpg"
-              fluid
-            />
+            <CImage align="end" rounded :src="addedMenu.picture" fluid />
           </div>
         </CCol>
-        <hr class="border border-light border-1 mt-3" />
+        <hr class="border border-1 border-success mt-3" />
       </CRow>
       <!-- End of Cart Body -->
 
@@ -270,7 +278,9 @@ const icons = freeSet;
       <CRow>
         <CCol>
           <div class="d-grid">
-            <CButton color="success" class="text-white">Proses pesanan</CButton>
+            <CButton @click="orderProcess" color="success" class="text-white"
+              >Proses pesanan</CButton
+            >
           </div>
         </CCol>
       </CRow>
@@ -281,6 +291,8 @@ const icons = freeSet;
 </template>
 
 <script>
+import { mapActions, mapGetters } from "vuex";
+
 export default {
   data() {
     return {
@@ -331,6 +343,12 @@ export default {
       },
     };
   },
+  computed: {
+    // ...mapState({
+    //   cartState: (state) => state.cartState,
+    // }),
+    ...mapGetters(["cartState"]),
+  },
   methods: {
     menuOption(id) {
       this.menus.filter((menu) => {
@@ -364,6 +382,7 @@ export default {
           price: this.selectedMenu.price,
           qty: qty,
           total: this.selectedMenu.price * qty,
+          picture: this.selectedMenu.picture,
         });
       } else {
         let menuExists = false;
@@ -385,6 +404,7 @@ export default {
             price: this.selectedMenu.price,
             qty: qty,
             total: this.selectedMenu.price * qty,
+            picture: this.selectedMenu.picture,
           });
         }
       }
@@ -395,13 +415,76 @@ export default {
       this.cart.totalItems = 0;
       this.cart.subtotal = 0;
 
+      // Hitung subtotal dan jumlah item dalam keranjang
       for (let i = 0; i < this.cart.menus.length; i++) {
         this.cart.totalItems += this.cart.menus[i].qty;
         this.cart.subtotal += this.cart.menus[i].price * this.cart.menus[i].qty;
       }
     },
-    viewCart() {
-      console.log(this.cart.menus);
+    cartIncreaseMenuQty(cartMenuId) {
+      for (let i = 0; i < this.cart.menus.length; i++) {
+        if (this.cart.menus[i].id === cartMenuId) {
+          this.cart.menus[i].qty++;
+
+          this.countSubtotalAndQty();
+        }
+      }
+    },
+    cartDecreaseMenuQty(cartMenuId) {
+      for (let i = 0; i < this.cart.menus.length; i++) {
+        if (this.cart.menus[i].id === cartMenuId) {
+          this.cart.menus[i].qty--;
+
+          this.countSubtotalAndQty();
+        }
+      }
+    },
+    removeCartItem(cartItemId) {
+      if (confirm("Kamu mau hapus menu ini dari keranjang belanja?")) {
+        for (let i = 0; i < this.cart.menus.length; i++) {
+          if (this.cart.menus[i].id === cartItemId) {
+            this.cart.menus.splice(i, 1);
+            this.countSubtotalAndQty();
+          }
+        }
+      } else {
+        console.log("Gajadi hapus deh");
+      }
+    },
+    countSubtotalAndQty() {
+      if (this.cart.menus.length > 0) {
+        for (let i = 0; i < this.cart.menus.length; i++) {
+          if (i === 0) {
+            this.cart.totalItems = 0;
+            this.cart.subtotal = 0;
+          }
+
+          this.cart.totalItems += this.cart.menus[i].qty;
+          this.cart.subtotal +=
+            this.cart.menus[i].price * this.cart.menus[i].qty;
+        }
+      } else {
+        this.cart.totalItems = 0;
+        this.cart.subtotal = 0;
+      }
+    },
+    ...mapActions(["saveCartState"]),
+    async orderProcess() {
+      if (confirm("Apakah seluruh pesanan sudah sesuai?")) {
+        const cart = [];
+
+        for (let i = 0; i < this.cart.menus.length; i++) {
+          cart.push({
+            id: this.cart.menus[i].id,
+            qty: this.cart.menus[i].qty,
+          });
+        }
+
+        await this.saveCartState(cart);
+        // console.log(cartStates);
+        // console.log(this.cartState);
+        this.$router.push("/pos/order-process");
+      }
     },
   },
 };

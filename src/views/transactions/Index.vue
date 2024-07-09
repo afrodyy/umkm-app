@@ -1,12 +1,13 @@
 <script setup>
-import { freeSet } from '@coreui/icons'
+import { freeSet } from "@coreui/icons";
 
-const icons = freeSet
+const icons = freeSet;
 </script>
 
 <template>
   <CRow>
     <CCol :xs="12">
+      <!-- Filter -->
       <CCard class="mb-4">
         <CCardBody>
           <CRow class="g-3">
@@ -20,6 +21,9 @@ const icons = freeSet
           </CRow>
         </CCardBody>
       </CCard>
+      <!-- End of Filter -->
+
+      <!-- Main Content -->
       <CCard class="mb-4">
         <CCardHeader>
           <h5 class="my-0">Daftar Menu</h5>
@@ -41,8 +45,13 @@ const icons = freeSet
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              <CTableRow v-for="(transaction, index) in filteredTransactions" :key="transaction.id">
-                <CTableHeaderCell scope="row">{{ index + 1 }}.</CTableHeaderCell>
+              <CTableRow
+                v-for="(transaction, index) in filteredTransactions"
+                :key="transaction.id"
+              >
+                <CTableHeaderCell scope="row"
+                  >{{ index + 1 }}.</CTableHeaderCell
+                >
                 <CTableDataCell>{{ transaction.id }}</CTableDataCell>
                 <CTableDataCell>{{ transaction.totalItem }}</CTableDataCell>
                 <CTableDataCell>{{ transaction.totalQty }}</CTableDataCell>
@@ -65,6 +74,7 @@ const icons = freeSet
           </CTable>
         </CCardBody>
       </CCard>
+      <!-- End of Main Content -->
     </CCol>
   </CRow>
 </template>
@@ -73,71 +83,73 @@ const icons = freeSet
 export default {
   data() {
     return {
-      filter: '',
+      filter: "",
       transactions: [
         {
-          id: 'TRX001',
+          id: "TRX001",
           totalItem: 5,
           totalQty: 7,
-          nominal: new Intl.NumberFormat('id', {
-            style: 'currency',
-            currency: 'IDR',
+          nominal: new Intl.NumberFormat("id", {
+            style: "currency",
+            currency: "IDR",
             minimumFractionDigits: 0,
           }).format(312000),
-          paymentMethod: 'Cash',
-          date: '2024-02-02',
-          time: '11:00:00',
-          cashier: 'Rio',
+          paymentMethod: "Cash",
+          date: "2024-02-02",
+          time: "11:00:00",
+          cashier: "Rio",
         },
         {
-          id: 'TRX002',
+          id: "TRX002",
           totalItem: 3,
           totalQty: 3,
-          nominal: new Intl.NumberFormat('id', {
-            style: 'currency',
-            currency: 'IDR',
+          nominal: new Intl.NumberFormat("id", {
+            style: "currency",
+            currency: "IDR",
             minimumFractionDigits: 0,
           }).format(111000),
-          paymentMethod: 'Credit',
-          date: '2024-02-02',
-          time: '11:15:00',
-          cashier: 'Rio',
+          paymentMethod: "Credit",
+          date: "2024-02-02",
+          time: "11:15:00",
+          cashier: "Rio",
         },
         {
-          id: 'TRX003',
+          id: "TRX003",
           totalItem: 8,
           totalQty: 10,
-          nominal: new Intl.NumberFormat('id', {
-            style: 'currency',
-            currency: 'IDR',
+          nominal: new Intl.NumberFormat("id", {
+            style: "currency",
+            currency: "IDR",
             minimumFractionDigits: 0,
           }).format(555000),
-          paymentMethod: 'Credit',
-          date: '2024-02-03',
-          time: '19:15:00',
-          cashier: 'Rio',
+          paymentMethod: "Credit",
+          date: "2024-02-03",
+          time: "19:15:00",
+          cashier: "Rio",
         },
       ],
-    }
+    };
   },
   computed: {
     filteredTransactions() {
       if (!this.filter) {
-        return this.transactions
+        return this.transactions;
       }
       return this.transactions.filter((transaction) =>
-        transaction.paymentMethod.toLowerCase().includes(this.filter.toLowerCase()),
-      )
+        transaction.paymentMethod
+          .toLowerCase()
+          .includes(this.filter.toLowerCase())
+      );
     },
   },
   methods: {
     handleFilter(e) {
-      this.filter = e.target.value
+      this.filter = e.target.value;
     },
     viewDetail(id) {
-      console.log(id)
-      this.$router.push({ name: 'Detil Transaksi', params: { id } })
+      console.log(id);
+      this.$router.push({ name: "Detil Transaksi", params: { id } });
     },
   },
-}
+};
 </script>
