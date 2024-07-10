@@ -1,9 +1,30 @@
+<script setup>
+import { freeSet } from "@coreui/icons";
+
+const icons = freeSet;
+</script>
+
 <template>
   <CRow>
     <CCol :xs="12">
       <CCard class="mb-4">
-        <CCardHeader>
+        <CCardHeader
+          class="d-flex justify-content-between align-items-center py-3"
+        >
           <h5 class="my-0">Kategori Menu</h5>
+
+          <CButton
+            color="primary"
+            size="sm"
+            @click="
+              () => {
+                addCategoryModal = true;
+              }
+            "
+          >
+            <CIcon :content="icons.cilZoomIn" />
+            Tambah Data
+          </CButton>
         </CCardHeader>
         <CCardBody>
           <CTable hover>
@@ -46,6 +67,66 @@
       </CCard>
     </CCol>
   </CRow>
+
+  <!-- Add Category Modal -->
+  <CModal
+    :visible="addCategoryModal"
+    @close="
+      () => {
+        addCategoryModal = false;
+      }
+    "
+    aria-labelledby="addCategoryModalLabel"
+  >
+    <CModalHeader>
+      <CModalTitle id="addCategoryModalLabel">Tambah Data Kategori</CModalTitle>
+    </CModalHeader>
+    <CModalBody>
+      <CForm class="row g-3">
+        <CCol xs="12">
+          <CFormLabel for="name"
+            >Nama Kategori <span class="text-danger">*</span></CFormLabel
+          >
+          <CFormInput v-model="name" id="name" placeholder="Ex: Makanan" />
+          <div v-for="(validation, index) in validations" :key="index">
+            <div v-if="validation.field === 'name'">
+              <small class="text-danger">{{ validation.message }}</small>
+            </div>
+          </div>
+        </CCol>
+        <CCol xs="12">
+          <CFormLabel for="description"
+            >Deskripsi <span class="text-danger">*</span></CFormLabel
+          >
+          <CFormTextarea
+            v-model="description"
+            id="description"
+            rows="3"
+            text="Deskripsikan secara singkat mengenai kategori produk ini."
+          ></CFormTextarea>
+          <div v-for="(validation, index) in validations" :key="index">
+            <div v-if="validation.field === 'description'">
+              <small class="text-danger">{{ validation.message }}</small>
+            </div>
+          </div>
+        </CCol>
+      </CForm>
+    </CModalBody>
+    <CModalFooter>
+      <CButton
+        color="secondary"
+        @click="
+          () => {
+            closeCategoryModal();
+          }
+        "
+      >
+        Batal
+      </CButton>
+      <CButton @click="addCategory" color="primary">Simpan</CButton>
+    </CModalFooter>
+  </CModal>
+  <!-- End of Add Category Modal -->
 </template>
 
 <script>
@@ -55,6 +136,10 @@ export default {
   data() {
     return {
       categories: [],
+      addCategoryModal: false,
+      name: "",
+      description: "",
+      validations: [],
     };
   },
   methods: {
@@ -67,6 +152,37 @@ export default {
         this.categories = response.data.data;
       } catch (error) {
         console.log(error);
+      }
+    },
+    closeCategoryModal() {
+      this.addCategoryModal = false;
+      this.name = "";
+      this.description = "";
+    },
+    async addCategory() {
+      try {
+        const response = await axios.post(
+          "http://localhost:3030/api/v1/category",
+          {
+            name: this.name,
+            description: this.description,
+          }
+        );
+
+        alert(response.data.message);
+        this.closeCategoryModal();
+        this.fetchCategories();
+      } catch (error) {
+        if (error.response.data.status === false) {
+          if (error.response.data.message === "SequelizeValidationError") {
+            for (let i = 0; i < error.response.data.data.length; i++) {
+              this.validations.push({
+                field: error.response.data.data[i].path,
+                message: error.response.data.data[i].message,
+              });
+            }
+          }
+        }
       }
     },
     async deleteCategory(id) {
