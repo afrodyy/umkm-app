@@ -22,7 +22,7 @@ const icons = freeSet;
               }
             "
           >
-            <CIcon :content="icons.cilZoomIn" />
+            <CIcon :content="icons.cilPlus" />
             Tambah Data
           </CButton>
         </CCardHeader>
@@ -48,8 +48,17 @@ const icons = freeSet;
                 <CTableDataCell>{{ category.name }}</CTableDataCell>
                 <CTableDataCell>{{ category.description }}</CTableDataCell>
                 <CTableDataCell>{{ category.count }}</CTableDataCell>
-                <CTableDataCell>
-                  <CButton color="info" size="sm" class="text-white me-1"
+                <CTableDataCell class="d-flex align-items-center gap-1">
+                  <CButton
+                    @click="
+                      () => {
+                        editCategoryModal = true;
+                        selectedCategory = { ...category };
+                      }
+                    "
+                    color="info"
+                    size="sm"
+                    class="text-white"
                     >Ubah</CButton
                   >
                   <CButton
@@ -87,7 +96,7 @@ const icons = freeSet;
           <CFormLabel for="name"
             >Nama Kategori <span class="text-danger">*</span></CFormLabel
           >
-          <CFormInput v-model="name" id="name" placeholder="Ex: Makanan" />
+          <CFormInput v-model="name" id="name" placeholder="Cth: Makanan" />
           <div v-for="(validation, index) in validations" :key="index">
             <div v-if="validation.field === 'name'">
               <small class="text-danger">{{ validation.message }}</small>
@@ -117,7 +126,7 @@ const icons = freeSet;
         color="secondary"
         @click="
           () => {
-            closeCategoryModal();
+            closeAddCategoryModal();
           }
         "
       >
@@ -127,6 +136,72 @@ const icons = freeSet;
     </CModalFooter>
   </CModal>
   <!-- End of Add Category Modal -->
+
+  <!-- Edit Category Modal -->
+  <CModal
+    :visible="editCategoryModal"
+    @close="
+      () => {
+        editCategoryModal = false;
+      }
+    "
+    aria-labelledby="editCategoryModalLabel"
+  >
+    <CModalHeader>
+      <CModalTitle id="editCategoryModalLabel">Ubah Data Kategori</CModalTitle>
+    </CModalHeader>
+    <CModalBody>
+      <CForm class="row g-3">
+        <CCol xs="12">
+          <CFormLabel for="name"
+            >Nama Kategori <span class="text-danger">*</span></CFormLabel
+          >
+          <CFormInput
+            v-model="selectedCategory.name"
+            id="name"
+            placeholder="Cth: Makanan"
+          />
+          <div v-for="(validation, index) in validations" :key="index">
+            <div v-if="validation.field === 'name'">
+              <small class="text-danger">{{ validation.message }}</small>
+            </div>
+          </div>
+        </CCol>
+        <CCol xs="12">
+          <CFormLabel for="description"
+            >Deskripsi <span class="text-danger">*</span></CFormLabel
+          >
+          <CFormTextarea
+            v-model="selectedCategory.description"
+            id="description"
+            rows="3"
+            text="Deskripsikan secara singkat mengenai kategori produk ini."
+          ></CFormTextarea>
+          <div v-for="(validation, index) in validations" :key="index">
+            <div v-if="validation.field === 'description'">
+              <small class="text-danger">{{ validation.message }}</small>
+            </div>
+          </div>
+        </CCol>
+      </CForm>
+    </CModalBody>
+    <CModalFooter>
+      <CButton
+        color="secondary"
+        @click="
+          () => {
+            closeEditCategoryModal();
+          }
+        "
+      >
+        Batal
+      </CButton>
+      <CButton @click="updateCategory(selectedCategory.id)" color="primary"
+        >Simpan</CButton
+      >
+    </CModalFooter>
+  </CModal>
+  <!-- End of Edit Category Modal -->
 </template>
 
 <script>
@@ -137,8 +212,10 @@ export default {
     return {
       categories: [],
       addCategoryModal: false,
+      editCategoryModal: false,
       name: "",
       description: "",
+      selectedCategory: {},
       validations: [],
     };
   },
@@ -154,10 +231,17 @@ export default {
         console.log(error);
       }
     },
-    closeCategoryModal() {
+    closeAddCategoryModal() {
       this.addCategoryModal = false;
       this.name = "";
       this.description = "";
+      this.validations = [];
+    },
+    closeEditCategoryModal() {
+      this.editCategoryModal = false;
+      this.name = "";
+      this.description = "";
+      this.validations = [];
     },
     async addCategory() {
       try {
@@ -170,7 +254,33 @@ export default {
         );
 
         alert(response.data.message);
-        this.closeCategoryModal();
+        this.closeAddCategoryModal();
+        this.fetchCategories();
+      } catch (error) {
+        if (error.response.data.status === false) {
+          if (error.response.data.message === "SequelizeValidationError") {
+            for (let i = 0; i < error.response.data.data.length; i++) {
+              this.validations.push({
+                field: error.response.data.data[i].path,
+                message: error.response.data.data[i].message,
+              });
+            }
+          }
+        }
+      }
+    },
+    async updateCategory(id) {
+      try {
+        const response = await axios.put(
+          `http://localhost:3030/api/v1/category/${id}`,
+          {
+            name: this.selectedCategory.name,
+            description: this.selectedCategory.description,
+          }
+        );
+
+        alert(response.data.message);
+        this.closeEditCategoryModal();
         this.fetchCategories();
       } catch (error) {
         if (error.response.data.status === false) {

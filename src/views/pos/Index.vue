@@ -5,7 +5,22 @@ const icons = freeSet;
 </script>
 
 <template>
-  <CRow>
+  <CRow v-if="menus.length < 1">
+    <CCol class="mb-3 p-0">
+      <CCard class="m-2 shadow-sm" style="height: 100%">
+        <CCardBody class="d-flex align-items-center">
+          <CRow>
+            <CCol>
+              <CCardText class="text-center"
+                >Tidak ada menu yang dapat ditampilkan</CCardText
+              >
+            </CCol>
+          </CRow>
+        </CCardBody>
+      </CCard>
+    </CCol>
+  </CRow>
+  <CRow v-else>
     <!-- Loop menu -->
     <CCol md="6" v-for="(menu, index) in menus" :key="index" class="mb-3 p-0">
       <CCard class="m-2 shadow-sm" style="height: 100%">
@@ -29,7 +44,7 @@ const icons = freeSet;
             </CCol>
             <CCol xs="6" md="4" class="align-self-center">
               <div class="clearfix mb-auto">
-                <CImage align="end" rounded :src="menu.picture" fluid />
+                <CImage align="end" rounded :src="menu.image" fluid />
               </div>
             </CCol>
             <div class="d-grid mt-3">
@@ -249,7 +264,7 @@ const icons = freeSet;
         </CCol>
         <CCol xs="4" class="align-self-center">
           <div class="clearfix">
-            <CImage align="end" rounded :src="addedMenu.picture" fluid />
+            <CImage align="end" rounded :src="addedMenu.image" fluid />
           </div>
         </CCol>
         <hr class="border border-1 border-success mt-3" />
@@ -292,45 +307,12 @@ const icons = freeSet;
 
 <script>
 import { mapActions, mapGetters } from "vuex";
+import axios from "axios";
 
 export default {
   data() {
     return {
-      menus: [
-        {
-          id: 1,
-          name: "Cheese Whooper Jr",
-          description:
-            "Roti sandwich ukuran sedang isi daging, sayuran, dan keju.",
-          price: 25000,
-          picture:
-            "https://media-order.bkdelivery.co.id/thumb/product_photo/2024/1/10/8qkzdcieytzabv8tj8ldxz_product_details.jpg",
-        },
-        {
-          id: 2,
-          name: "Coca Cola",
-          description: "Minuman bersoda yang menyegarkan",
-          price: 11000,
-          picture:
-            "https://media-order.bkdelivery.co.id/thumb/product_photo/2023/3/20/b7hdgz6h6i8ijhxqn98aza_product_list.jpg",
-        },
-        {
-          id: 3,
-          name: "French Fries",
-          description: "Kentang goreng gurih untuk pelengkap burgermu",
-          price: 15000,
-          picture:
-            "https://media-order.bkdelivery.co.id/thumb/product_photo/2023/3/20/7hl24gpmnyvdpstiqyg3jt_product_list.jpg",
-        },
-        {
-          id: 4,
-          name: "Cone Ice Cream",
-          description: "Ice cream mix coklat dan vanilla",
-          price: 9000,
-          picture:
-            "https://media-order.bkdelivery.co.id/thumb/product_photo/2023/1/24/ebszactggahkjd3virdpg6_product_details.jpg",
-        },
-      ],
+      menus: [],
       menuModal: false,
       cartModal: false,
       selectedMenu: null,
@@ -350,6 +332,15 @@ export default {
     ...mapGetters(["cartState"]),
   },
   methods: {
+    async fetchMenus() {
+      try {
+        const response = await axios.get("http://localhost:3030/api/v1/menu");
+
+        this.menus = response.data.data;
+      } catch (error) {
+        console.log(error);
+      }
+    },
     menuOption(id) {
       this.menus.filter((menu) => {
         for (let i = 0; i < this.menus.length; i++) {
@@ -382,7 +373,7 @@ export default {
           price: this.selectedMenu.price,
           qty: qty,
           total: this.selectedMenu.price * qty,
-          picture: this.selectedMenu.picture,
+          image: this.selectedMenu.image,
         });
       } else {
         let menuExists = false;
@@ -404,7 +395,7 @@ export default {
             price: this.selectedMenu.price,
             qty: qty,
             total: this.selectedMenu.price * qty,
-            picture: this.selectedMenu.picture,
+            picture: this.selectedMenu.image,
           });
         }
       }
@@ -486,6 +477,9 @@ export default {
         this.$router.push("/pos/order-process");
       }
     },
+  },
+  created() {
+    this.fetchMenus();
   },
 };
 </script>
